@@ -4,61 +4,63 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Notification\DatabaseNotification;
 use Inertia\Inertia;
+use App\Notifications\TaskNotification;
 
 class TaskController extends Controller
 {
-   public function index()
-   {
-    $tasks = Task::all();
-    return Inertia::render('TodoList.vue',['tasks' =>$tasks]);
-   }
+    public function index()
+    {
+        $tasks = Task::all();
 
-   public function store(Request $request)
-   {
-    $request->validate(['title' =>'required|string|max:255']);
-    Task::create($request->only('title'));
-    return redirect()->back();
-   }
+        // Récupérer les notifications les plus récentes
+        $notifications = \DB::table('notifications')
+            ->latest()
+            ->take(10)
+            ->get();
 
+        return Inertia::render('TodoList.vue', [
+            'tasks' => $tasks,
+            'notifications' => $notifications,
+        ]);
+    }
 
-   // public function update(Request $request, Task $task)
-   // {
-   //  $task->update(['completed' => $request->completed]);
-   //  return redirect()->back();
-   // }
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate(['title' => 'required|string|max:255']);
+        $task = Task::create($validatedData);
 
-   // public function destroy(Task $task)
-   // {
-   //  $task->delete();
-   //  return redirect()->back();
-   // }
+        // Créer une notification dans la base de données
+        $task->notify(new TaskNotification($task, 'ajoutée'));
 
+        return redirect()->back();
+    }
 
+    public function update(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255',
+            'completed' => 'required|boolean',
+        ]);
 
-   public function update(Request $request, $id)
-   {
-       $validatedData = $request->validate([
-           'title' => 'required|string|max:255',
-           'completed' => 'required|boolean', // Assurez-vous que completed est un boolean
-       ]);
-   
-       $task = Task::findOrFail($id);
-       $task->fill($validatedData);
-       $task->save();
-   
-       return response()->json($task);
-   }
+        $task = Task::findOrFail($id);
+        $task->update($validatedData);
 
+        // Créer une notification
+        $task->notify(new TaskNotification($task, 'modifiée'));
 
+        return response()->json($task);
+    }
 
+    public function destroy($id)
+    {
+        $task = Task::findOrFail($id);
+        $task->delete();
 
+        // Créer une notification
+        $task->notify(new TaskNotification($task, 'supprimée'));
 
-public function destroy($id)
-{
-    $task = Task::findOrFail($id);
-    $task->delete();
-
-    return response()->json(['message' => 'Task deleted successfully']);
-}
+        return response()->json(['message' => 'Task deleted successfully']);
+    }
 }
