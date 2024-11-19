@@ -23,18 +23,27 @@ class TaskController extends Controller
         return Inertia::render('TodoList.vue', [
             'tasks' => $tasks,
             'notifications' => $notifications,
+            'exportUrl' => route('tasks.export'),
+            'importUrl' => route('tasks.import'),
         ]);
     }
 
     public function store(Request $request)
     {
+        // Valider la demande
         $validatedData = $request->validate(['title' => 'required|string|max:255']);
+        
+        // Créer la tâche
         $task = Task::create($validatedData);
-
+    
         // Créer une notification dans la base de données
         $task->notify(new TaskNotification($task, 'ajoutée'));
-
-        return redirect()->back();
+    
+        // Stocker un message flash dans la session pour la redirection
+        // session()->flash('success', 'Tâche ajoutée avec succès!');
+    
+        // Rediriger vers la page précédente ou vers une autre route
+        return redirect()->route('tasks.index')->with('success', 'Tâche ajoutée avec succès!');
     }
 
     public function update(Request $request, $id)
@@ -43,24 +52,26 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'completed' => 'required|boolean',
         ]);
-
+    
         $task = Task::findOrFail($id);
         $task->update($validatedData);
-
+    
         // Créer une notification
         $task->notify(new TaskNotification($task, 'modifiée'));
-
-        return response()->json($task);
+    
+        // Rediriger vers la page des tâches
+        return redirect()->route('tasks.index')->with('success', 'Tâche mise à jour avec succès!');
     }
 
     public function destroy($id)
-    {
-        $task = Task::findOrFail($id);
-        $task->delete();
+{
+    $task = Task::findOrFail($id);
+    $task->delete();
 
-        // Créer une notification
-        $task->notify(new TaskNotification($task, 'supprimée'));
+    // Créer une notification
+    $task->notify(new TaskNotification($task, 'supprimée'));
 
-        return response()->json(['message' => 'Task deleted successfully']);
-    }
+    // Rediriger vers la page des tâches
+    return redirect()->route('tasks.index')->with('success', 'Tâche supprimée avec succès!');
+}
 }
