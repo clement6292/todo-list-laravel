@@ -21,7 +21,7 @@
       <form @submit.prevent="importTasks" enctype="multipart/form-data">
       <input type="file" ref="fileInput" accept=".xlsx, .xls" required
              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-500 focus:border-blue-500 p-2">
-      <button type="submit" class="w-full bg-blue-500 text-white font-semibold font-bold py-2 rounded-md hover:bg-blue-600 transition duration-200 mt-2">
+      <button type="submit" class="w-full bg-green-500 text-white font-semibold font-bold py-2 rounded-md hover:bg-lime-400 transition duration-200 mt-2">
         Importer les Tâches
       </button>
     </form>
@@ -43,13 +43,13 @@
       />
       <button
         type="submit"
-        class="bg-blue-600 text-white px-6 py-4 rounded-r-lg hover:bg-blue-700 transition duration-200"
+        class="bg-green-500 text-white px-6 py-4 rounded-r-lg hover:bg-lime-500 transition duration-200"
       >
         Ajouter
       </button>
     </form>
 
-    <ul class="divide-y divide-gray-200  bg-gray-100">
+    <ul class="divide-y divide-gray-200  mb-14">
       <li
         v-for="task in tasks"
         :key="task.id"
@@ -141,7 +141,7 @@
 
     <!-- Notifications -->
     <div v-if="notifications.length" class="mb-6">
-      <h2 class="text-lg font-bold text-white mb-4 p-5 text-center text-3xl bg-green-500">
+      <h2 class="text-lg font-bold text-white mb-5 p-5 text-center text-3xl bg-green-500">
         Notifications
       </h2>
       <ul class="space-y-2">
@@ -204,21 +204,34 @@ const importTasks = async () => {
 };
 
 // Fonction pour ajouter une tâche
-const addTask = () => {
+const addTask = async () => {
+  console.log("Tentative d'ajout de tâche:", newTask.value);
   if (!newTask.value.trim()) return; // Ne pas ajouter de tâches vides
-  Inertia.post("/tasks", { title: newTask.value }).then(() => {
+  
+  try {
+    await Inertia.post("/tasks", { title: newTask.value });
+    console.log("Tâche ajoutée avec succès");
+    
     Swal.fire({
       title: "Succès",
       text: "La tâche a été ajoutée avec succès!",
       icon: "success",
+      timer: 3000, // Optionnel : Ferme automatiquement après 3 secondes
       showConfirmButton: false,
       willClose: () => {
         createNotification(`La tâche "${newTask.value}"`, "ajoutée.");
-        showModal.value = false;
         newTask.value = ""; // Réinitialiser le champ d'entrée ici
       },
     });
-  })
+  } catch (error) {
+    console.error("Erreur lors de l'ajout de la tâche:", error);
+    Swal.fire({
+      title: "Erreur",
+      text: "Une erreur est survenue lors de l'ajout de la tâche.",
+      icon: "error",
+      confirmButtonText: "OK",
+    });
+  }
 };
 
 // Fonction pour créer une notification
@@ -246,7 +259,6 @@ const cancelEditing = () => {
 const updateEditingTask = async () => {
   try {
 
-    console.log("ID de la tâche à mettre à jour:", editingTask.value.id); // Vérifiez ici
     if (editingTask.value) {
       await Inertia.put(`/tasks/${editingTask.value.id}`, {
         title: editingTask.value.title,
@@ -286,6 +298,7 @@ const cancelDelete = () => {
 const deleteTask = async (id) => {
   try {
     await Inertia.delete(`/tasks/${id}`);
+      // tasks.value = tasks.value.filter(task => task.id !== id);
     Swal.fire({
       title: "Succès",
       text: "La tâche a été supprimée!",
@@ -294,7 +307,7 @@ const deleteTask = async (id) => {
       showConfirmButton: false, 
       willClose: () => {
         createNotification("La tâche a été", "supprimée.");
-        showModal.value = true; // Ferme la modale après suppression
+        showModal.value = false; // Ferme la modale après suppression
         selectedTaskId.value = null; // Réinitialiser l'ID sélectionné
       },
     });

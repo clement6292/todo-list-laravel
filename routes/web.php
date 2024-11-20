@@ -8,9 +8,9 @@ use App\Imports\TasksImport;
 use Maatwebsite\Excel\Facades\Excel;
 
 
-Route::get('/', function () {
-   return Inertia::render('Todolist');
-});
+// Route::get('/', function () {
+//    return Inertia::render('Todolist');
+// });
 
 // Route pour afficher la liste des tâches
 Route::get('/', [TaskController::class, 'index'])->name('tasks.index');

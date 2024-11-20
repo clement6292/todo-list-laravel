@@ -43,7 +43,8 @@ class TaskController extends Controller
         // session()->flash('success', 'Tâche ajoutée avec succès!');
     
         // Rediriger vers la page précédente ou vers une autre route
-        return redirect()->route('tasks.index')->with('success', 'Tâche ajoutée avec succès!');
+        // return redirect()->route('tasks.index')->with('success', 'Tâche ajoutée avec succès!');
+       return to_route('tasks.index');
     }
 
     public function update(Request $request, $id)
@@ -60,7 +61,8 @@ class TaskController extends Controller
         $task->notify(new TaskNotification($task, 'modifiée'));
     
         // Rediriger vers la page des tâches
-        return redirect()->route('tasks.index')->with('success', 'Tâche mise à jour avec succès!');
+        // return redirect()->route('tasks.index')->with('success', 'Tâche mise à jour avec succès!');
+        return to_route('tasks.index');
     }
 
     public function destroy($id)
@@ -72,6 +74,7 @@ class TaskController extends Controller
     $task->notify(new TaskNotification($task, 'supprimée'));
 
     // Rediriger vers la page des tâches
-    return redirect()->route('tasks.index')->with('success', 'Tâche supprimée avec succès!');
+    // return redirect()->route('tasks.index')->with('success', 'Tâche supprimée avec succès!');
+    return to_route('tasks.index');
 }
 }
